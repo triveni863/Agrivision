@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AgriVision - Smart Crop Suitability Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🌾 AgriVision</h1>
+        <p>Upload your land and seed images to analyze crop suitability and estimated yield.</p>
+
+        <form id="predictForm" enctype="multipart/form-data">
+            <label for="seed_type">Select Seed Type:</label>
+            <select name="seed_type" id="seed_type" required>
+                <option value="Wheat">Wheat</option>
+                <option value="Rice">Rice</option>
+                <option value="Maize">Maize</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Soybean">Soybean</option>
+            </select>
+
+            <label for="land_img">Upload Land Image:</label>
+            <input type="file" name="land_img" id="land_img" accept="image/*" required>
+
+            <label for="seed_img">Upload Seed Image:</label>
+            <input type="file" name="seed_img" id="seed_img" accept="image/*" required>
+
+            <button type="submit">Analyze</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
