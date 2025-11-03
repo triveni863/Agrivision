@@ -1,0 +1,73 @@
+from flask import Flask, render_template, request, jsonify
+import joblib
+import numpy as np
+from tensorflow.keras.models import load_model
+from PIL import Image
+import io
+import tensorflow as tf
+
+app = Flask(__name__)
+
+# Load pre-trained models
+# model/crop_model.pkl - classical ML model (soil features)
+# model/yield_model.h5 - CNN model for image-based prediction (optional)
+try:
+    ml_model = joblib.load('model/crop_model.pkl')
+except:
+    ml_model = None
+
+try:
+    cnn_model = load_model('model/yield_model.h5')
+except:
+    cnn_model = None
+
+# Dummy label map
+SEED_TYPES = ["Wheat", "Rice", "Maize", "Cotton", "Soybean"]
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    seed_type = request.form.get("seed_type")
+
+    land_img = request.files.get("land_img")
+    seed_img = request.files.get("seed_img")
+
+    if not land_img or not seed_img:
+        return jsonify({"error": "Please upload both images."})
+
+    # Process images
+    def preprocess(img_file):
+        img = Image.open(io.BytesIO(img_file.read())).convert('RGB')
+        img = img.resize((128, 128))
+        img_array = np.array(img) / 255.0
+        return np.expand_dims(img_array, axis=0)
+
+    land_features = preprocess(land_img)
+    seed_features = preprocess(seed_img)
+
+    # Dummy CNN prediction (replace with actual model)
+    if cnn_model:
+        yield_pred = float(cnn_model.predict(land_features)[0][0])
+    else:
+        yield_pred = np.random.uniform(2.5, 6.5)  # mock yield in tons/ha
+
+    # Simulated soil–seed suitability using a dummy ML model
+    if ml_model:
+        suitability = ml_model.predict([[yield_pred]])[0]
+    else:
+        suitability = "Suitable" if yield_pred > 3.0 else "Not Suitable"
+
+    best_land = "Loamy Soil" if seed_type in ["Wheat", "Rice"] else "Sandy Soil"
+
+    return jsonify({
+        "seed": seed_type,
+        "yield_prediction": round(yield_pred, 2),
+        "suitability": suitability,
+        "recommended_land": best_land
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True)
